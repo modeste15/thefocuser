@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Focuser</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="container">
+
+    <header>
+      <img src="logo.png" alt="" class="logo">
+      <div>
+        <h1>The Focuser</h1>
+        <p class="subtitle">Manage blocked sites</p>
+      </div>
+    </header>
+
+    <section>
+      <h2>Block a new site</h2>
+      <div class="add-form">
+        <input id="domain-input" type="text" placeholder="domain.com" autocomplete="off" spellcheck="false">
+        <input id="name-input"   type="text" placeholder="Label (optional)" autocomplete="off">
+        <button id="add-btn">Add</button>
+      </div>
+      <p class="error" id="error-msg"></p>
+    </section>
+
+    <section>
+      <div class="list-header">
+        <h2>Blocked sites <span class="count" id="count"></span></h2>
+        <div class="stats-row">
+          <span class="total-label">Total attempts: <strong id="total-count">0</strong></span>
+          <button class="btn-reset" id="reset-btn">Reset counts</button>
+        </div>
+      </div>
+      <div id="site-list"></div>
+    </section>
+
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>
