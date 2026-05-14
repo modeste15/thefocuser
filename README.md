@@ -20,7 +20,7 @@ A Chrome / Edge browser extension that blocks distracting social networks and re
 1. Clone or download this repository
 2. Open Chrome and go to `chrome://extensions` (or `edge://extensions`)
 3. Enable **Developer mode** (toggle in the top-right corner)
-4. Click **Load unpacked** and select the `thefocus/` folder
+4. Click **Load unpacked** and select the `thefocuser/` folder
 5. The extension icon appears in your toolbar
 
 ---
@@ -79,34 +79,4 @@ Open via: right-click the extension icon → **Options**, or `chrome://extension
 
 Domain validation strips `https://`, `www.`, and paths automatically, so you can paste a full URL.
 
----
 
-## Blocked Sites (Defaults)
-
-| Domain | Label |
-|---|---|
-| `facebook.com` | Facebook |
-| `instagram.com` | Instagram |
-| `twitter.com` | Twitter |
-| `x.com` | X (Twitter) |
-| `tiktok.com` | TikTok |
-
----
-
-## Permissions
-
-| Permission | Why |
-|---|---|
-| `declarativeNetRequest` | Redirect blocked URLs at the network level |
-| `storage` | Save the blocked sites list and visit counts |
-| `host_permissions: <all_urls>` | Required so blocking rules and the content script work for any user-added domain |
-
----
-
-## Browser Compatibility
-
-| Browser | Support |
-|---|---|
-| Chrome 88+ | Full (Manifest V3) |
-| Edge 88+ | Full (Chromium-based) |
-| Firefox | Not supported (uses MV2) |
