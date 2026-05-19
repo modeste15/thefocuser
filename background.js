@@ -8,22 +8,41 @@ const DEFAULT_SITES = [
 
 let pauseTimer = null;
 
-async function getSites() {
-  const { blockedSites } = await chrome.storage.sync.get('blockedSites');
-  return blockedSites || DEFAULT_SITES;
+// Shared schedule logic — duplicated in content.js and options.js
+function isSiteActiveNow(site) {
+  const s = site.schedule;
+  if (!s || s.type === 'always') return true;
+  if (s.type === 'duration') return !!(s.until && Date.now() < s.until);
+  if (s.type === 'timerange') {
+    if (!s.startTime || !s.endTime) return true;
+    const now = new Date();
+    const cur = now.getHours() * 60 + now.getMinutes();
+    const [sh, sm] = s.startTime.split(':').map(Number);
+    const [eh, em] = s.endTime.split(':').map(Number);
+    const start = sh * 60 + sm, end = eh * 60 + em;
+    return start <= end
+      ? cur >= start && cur < end
+      : cur >= start || cur < end; // overnight range e.g. 22:00–06:00
+  }
+  return true;
 }
-
 
 function domainRegex(domain) {
   const escaped = domain.replace(/\./g, '\\.');
   return `^https?://([a-z0-9-]+\\.)*${escaped}([/?#]|$)`;
 }
 
+async function getSites() {
+  const { blockedSites } = await chrome.storage.sync.get('blockedSites');
+  return blockedSites || DEFAULT_SITES;
+}
+
 async function setupRules() {
   const sites = await getSites();
+  const activeSites = sites.filter(isSiteActiveNow);
   const existing = await chrome.declarativeNetRequest.getDynamicRules();
 
-  const rules = sites.map(site => ({
+  const rules = activeSites.map(site => ({
     id: site.id,
     priority: 1,
     action: {
@@ -41,7 +60,7 @@ async function setupRules() {
     addRules: rules
   }, () => {
     if (chrome.runtime.lastError) {
-      console.error('The Focus — rule setup failed:', chrome.runtime.lastError);
+      console.error('The Focuser — rule setup failed:', chrome.runtime.lastError);
     }
   });
 }
@@ -51,10 +70,21 @@ chrome.runtime.onInstalled.addListener(async () => {
   if (!blockedSites) {
     await chrome.storage.sync.set({ blockedSites: DEFAULT_SITES, nextId: 6 });
   }
+  chrome.alarms.create('scheduleCheck', { periodInMinutes: 1 });
   setupRules();
 });
 
-chrome.runtime.onStartup.addListener(setupRules);
+chrome.runtime.onStartup.addListener(async () => {
+  const alarm = await chrome.alarms.get('scheduleCheck');
+  if (!alarm) chrome.alarms.create('scheduleCheck', { periodInMinutes: 1 });
+  setupRules();
+});
+
+// Re-evaluate schedules every minute so time-range and duration blocks
+// activate/deactivate automatically without needing a page reload.
+chrome.alarms.onAlarm.addListener(alarm => {
+  if (alarm.name === 'scheduleCheck') setupRules();
+});
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === 'reloadRules') {
@@ -78,10 +108,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
         () => {
           sendResponse({ ok: true });
           if (pauseTimer) clearTimeout(pauseTimer);
-          pauseTimer = setTimeout(() => {
-            setupRules();
-            pauseTimer = null;
-          }, msg.minutes * 60 * 1000);
+          pauseTimer = setTimeout(() => { setupRules(); pauseTimer = null; },
+            msg.minutes * 60 * 1000);
         }
       );
     });
